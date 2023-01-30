@@ -23,7 +23,7 @@ const uint CLK_PIN = 2;
 // ignore leftover artifacts
 
 const uint32_t OUT_TARGET_POWER = 0;
-const uint32_t IN_NRF_VDD = 1;
+const uint32_t IN_STM_RST = 1;
 const uint32_t TARGET_POWER = 18;
 
 // const uint32_t PDND_TRIG = 18;
@@ -34,15 +34,19 @@ void initialize_board() {
     gpio_init(TARGET_POWER);
     gpio_put(TARGET_POWER, 0);
     gpio_set_dir(TARGET_POWER, GPIO_OUT);
+    gpio_pull_up(TARGET_POWER);
     gpio_init(PDND_GLITCH);
-    gpio_put(PDND_GLITCH, 0);
+    gpio_put(PDND_GLITCH, 1);
     gpio_set_dir(PDND_GLITCH, GPIO_OUT);
+    gpio_init(IN_STM_RST);
+    gpio_set_dir(IN_STM_RST, GPIO_IN);
+
 }
 
 //restart the Airtag
 static inline power_cycle_target() {
     gpio_put(TARGET_POWER, 0);
-    sleep_ms(50);
+    sleep_ms(1000);
     gpio_put(TARGET_POWER, 1);
 }
 
@@ -120,17 +124,17 @@ int main() {
                 power_cycle_target();
 
                 //Wait until Pin IN_NRF_VDD has no Voltage applied (No voltage applied means the airtag has power because the level shifter logic inverts the signal)
-                while(gpio_get(IN_NRF_VDD));
+                while(!gpio_get(IN_STM_RST));
                 for(uint32_t i=0; i < delay; i++) {
                     asm("NOP");
                 }
                 
                 //Trigger N-Channel-Mosfet for Pulse Number of ASM NOPs (cut power of cpu core for Pulse number of asm NOPs)
-                gpio_put(PDND_GLITCH, 1);
+                gpio_put(PDND_GLITCH, 0);
                 for(uint32_t i=0; i < pulse; i++) {
                     asm("NOP");
                 }
-                gpio_put(PDND_GLITCH, 0);
+                gpio_put(PDND_GLITCH, 1);
 
         }
     }
