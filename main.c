@@ -446,7 +446,7 @@ int main() {
     printf("Boot-Sequence finished - ready for Serial Commands \r\n\n");
     
     //Delay to wait after receiving the signal that airtag NRF has power (Delay = 10000 is 10000 ASM NOP executions on the Pico)
-    uint32_t delay = 3460;
+    uint32_t delay = 3400;
     
     //Length of the Glitch (how long power cut from cpu core) measured in ASM Nop executions
     uint32_t pulse = 18;
@@ -485,9 +485,6 @@ int main() {
                 break;
             //Command to execute glitch
             case CMD_GLITCH:
-		if(glitch_count % 10){
-			delay += 1;
-		}
 		glitch_count += 1;
                 power_cycle_target();
 
@@ -503,12 +500,6 @@ int main() {
                     asm("NOP");
                 }
                 gpio_put(PDND_GLITCH, 0);
-		/*
-		// Check for SWD ID
-		idCode = swdInit();
-		printf("idCode Discovered: %x",idCode);
-		*/
-
 
         }
     }
